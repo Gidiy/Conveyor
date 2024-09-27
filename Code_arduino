@@ -1,0 +1,73 @@
+char incomingValue[50];  // Buffer to store the incoming string
+int index = 0;
+int flag = 0;
+void setup() 
+{
+  Serial.begin(9600);         
+  pinMode(9, OUTPUT);  // Use a PWM-capable pin (e.g., 9)
+  Serial.println("Setup Complete. Ready to receive commands.");  // Debugging info
+}
+
+void loop()
+{
+  while (Serial.available() > 0)  
+  {
+    char incomingChar = Serial.read();  // Read each character
+    Serial.print("Received: ");  // Debugging info
+    Serial.println(incomingChar);  // Show what character was received
+
+    if (incomingChar != '.')  // Check if the character is not the terminator
+    {
+      incomingValue[index++] = incomingChar;  // Add character to buffer
+    } 
+    else 
+    {
+      incomingValue[index] = '\0';  // Null-terminate the string
+      index = 0;  // Reset index for the next incoming string
+      
+      Serial.print("Complete string received: ");  // Debugging info
+      Serial.println(incomingValue);  // Print the received string
+
+      // 1. Turn on light
+      if (strcmp(incomingValue, "TURN ON") == 0) {
+        Serial.println("Command: TURN ON - Turning ON LED");  // Debugging info
+        analogWrite(9, 255);  // Turn on LED with max brightness
+      }
+      
+      // 2. Turn off light
+      else if (strcmp(incomingValue, "TURN OFF") == 0) {
+        Serial.println("Command: TURN OFF - Turning OFF LED");  // Debugging info
+        analogWrite(9, 0);   // Turn off LED
+      }
+      
+      // 3. Toggle direction with "SIDE" command
+      else if (strcmp(incomingValue, "SIDE") == 0) 
+      {
+        Serial.print("Command: SIDE - Toggling LED, flag = ");  // Debugging info
+        Serial.println(flag);
+        
+        if (flag == 0)
+        {
+          analogWrite(9, 255);  // Turn on LED
+          flag = 1;
+        }
+        else if (flag == 1)
+        {
+          analogWrite(9, 0);  // Turn off LED
+          flag = 0;
+        }
+      }
+
+      // 4. Control speed (assumes input like "50.")
+      else 
+      {
+        int speed = atoi(incomingValue);  // Convert the string to an integer
+        if (speed >= 0 && speed <= 100) {
+          Serial.println("Changing speed...");  // Debugging info
+          int pwmValue = map(speed, 0, 100, 0, 255);  // Map speed to PWM value
+          analogWrite(9, pwmValue);  // Adjust LED brightness or motor speed
+        }
+      }
+    }
+  }
+}
